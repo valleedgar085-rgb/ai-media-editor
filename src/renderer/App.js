@@ -1,42 +1,76 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import DragDropZone from './components/DragDropZone';
-import Preview from './components/Preview';
-import Timeline from './components/Timeline';
+import { PreviewPlayer } from './components/Preview/index';
+import { TimelinePanel } from './components/Timeline/index';
+import useEditorStore from './store/useEditorStore';
+import { generateThumbnail, getVideoDuration, isVideoFile, isAudioFile } from './utils/thumbnailUtils';
 
 function App() {
-  const [mediaFiles, setMediaFiles] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const { addMediaItem, updateItemThumbnail, updateItemDuration, tracks } = useEditorStore();
 
-  const handleFilesAdded = useCallback((newFiles) => {
-    const fileObjects = newFiles.map((file, index) => ({
-      id: `${Date.now()}-${index}`,
-      name: file.name || file.path?.split(/[/\\]/).pop() || 'Unknown',
-      path: file.path || URL.createObjectURL(file),
-      type: file.type || (file.path?.match(/\.(mp4|webm|mkv|avi|mov)$/i) ? 'video' : 'image'),
-      duration: 0
-    }));
-    
-    setMediaFiles(prev => [...prev, ...fileObjects]);
-    if (!selectedFile && fileObjects.length > 0) {
-      setSelectedFile(fileObjects[0]);
+  const handleFilesAdded = useCallback(async (newFiles) => {
+    for (const file of newFiles) {
+      const name = file.name || file.path?.split(/[/\\]/).pop() || 'Unknown';
+      const path = file.path || URL.createObjectURL(file);
+      
+      // Determine file type
+      let type = 'image';
+      if (isVideoFile(path) || isVideoFile(name)) {
+        type = 'video';
+      } else if (isAudioFile(path) || isAudioFile(name)) {
+        type = 'audio';
+      }
+      
+      // Determine which track to add to
+      const trackId = type === 'audio' ? 'audio-track' : 'video-track';
+      
+      // Get video duration if applicable
+      let duration = 5; // default for images
+      if (type === 'video') {
+        try {
+          duration = await getVideoDuration(path);
+        } catch (e) {
+          console.warn('Could not get video duration:', e);
+        }
+      }
+      
+      // Add item to store
+      const itemId = addMediaItem(trackId, {
+        name,
+        path,
+        type,
+        duration,
+      });
+      
+      // Generate thumbnail asynchronously
+      if (type !== 'audio') {
+        generateThumbnail(path, type).then(thumbnail => {
+          if (thumbnail) {
+            updateItemThumbnail(trackId, itemId, thumbnail);
+          }
+        }).catch(e => {
+          console.warn('Thumbnail generation failed:', e);
+        });
+      }
     }
-  }, [selectedFile]);
+  }, [addMediaItem, updateItemThumbnail, updateItemDuration]);
 
-  const handleFileSelect = useCallback((file) => {
-    setSelectedFile(file);
+  // Keyboard shortcut hints
+  useEffect(() => {
+    console.log('AI Media Editor - Phase 2');
+    console.log('Keyboard shortcuts:');
+    console.log('  Space: Play/Pause');
+    console.log('  Left/Right Arrow: Step backward/forward');
+    console.log('  Shift+Left/Right: Go to start/end');
+    console.log('  +/-: Zoom in/out');
+    console.log('  Delete/Backspace: Remove selected item');
   }, []);
-
-  const handleRemoveFile = useCallback((fileId) => {
-    setMediaFiles(prev => prev.filter(f => f.id !== fileId));
-    if (selectedFile?.id === fileId) {
-      setSelectedFile(null);
-    }
-  }, [selectedFile]);
 
   return (
     <div className="app-container">
       <header className="app-header">
         <h1>AI Media Editor</h1>
+        <span className="app-version">Phase 2</span>
       </header>
       
       <main className="app-main">
@@ -45,17 +79,12 @@ function App() {
         </div>
         
         <div className="center-panel">
-          <Preview file={selectedFile} />
+          <PreviewPlayer />
         </div>
       </main>
       
       <footer className="app-footer">
-        <Timeline 
-          files={mediaFiles} 
-          selectedFile={selectedFile}
-          onFileSelect={handleFileSelect}
-          onRemoveFile={handleRemoveFile}
-        />
+        <TimelinePanel />
       </footer>
     </div>
   );

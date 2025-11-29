@@ -1,0 +1,46 @@
+{
+  "description": "Demo assets for AI Media Editor Phase 2",
+  "assets": [
+    {
+      "name": "Sample Video",
+      "type": "video",
+      "format": "mp4",
+      "duration": 30,
+      "resolution": "1920x1080",
+      "notes": "Use any royalty-free video for testing. Recommended: download from https://www.pexels.com/videos/"
+    },
+    {
+      "name": "Sample Image 1",
+      "type": "image",
+      "format": "jpg",
+      "resolution": "1920x1080",
+      "notes": "Use any royalty-free image for testing. Recommended: download from https://unsplash.com/"
+    },
+    {
+      "name": "Sample Image 2",
+      "type": "image", 
+      "format": "png",
+      "resolution": "1920x1080",
+      "notes": "Use any royalty-free image for testing"
+    },
+    {
+      "name": "Sample Audio",
+      "type": "audio",
+      "format": "mp3",
+      "duration": 60,
+      "notes": "Use any royalty-free audio for testing. Recommended: download from https://freesound.org/"
+    }
+  ],
+  "testingInstructions": [
+    "1. Download sample media files from the recommended sources",
+    "2. Place them in this assets/ folder",
+    "3. Run the app with 'npm start'",
+    "4. Drag and drop the files into the upload zone",
+    "5. Test the following features:",
+    "   - Timeline drag and drop reordering",
+    "   - Zoom controls (+/- buttons and keyboard shortcuts)",
+    "   - Playback controls (play, pause, seek, frame step)",
+    "   - Filter adjustments (brightness, contrast, saturation)",
+    "   - Audio sync with video playback"
+  ]
+}

@@ -27,7 +27,7 @@ function DragDropZone({ onFilesAdded }) {
 
     const files = Array.from(e.dataTransfer.files).filter(file => {
       const ext = file.name.split('.').pop().toLowerCase();
-      const allowedExtensions = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'jpg', 'jpeg', 'png', 'gif', 'bmp'];
+      const allowedExtensions = ['mp4', 'webm', 'mkv', 'avi', 'mov', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'];
       return allowedExtensions.includes(ext);
     });
 
@@ -48,7 +48,7 @@ function DragDropZone({ onFilesAdded }) {
       const input = document.createElement('input');
       input.type = 'file';
       input.multiple = true;
-      input.accept = 'video/*,image/*';
+      input.accept = 'video/*,image/*,audio/*';
       input.onchange = (e) => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
@@ -79,7 +79,7 @@ function DragDropZone({ onFilesAdded }) {
           Browse Files
         </button>
         <p className="supported-formats">
-          Supported: MP4, WebM, MKV, AVI, MOV, JPG, PNG, GIF
+          Supported: MP4, WebM, MKV, AVI, MOV, JPG, PNG, GIF, MP3, WAV, OGG
         </p>
       </div>
     </div>
