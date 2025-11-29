@@ -41,5 +41,5 @@ module.exports = {
     extensions: ['.js', '.jsx']
   },
   devtool: process.env.NODE_ENV === 'production' ? false : 'source-map',
-  target: 'web'
+  target: 'electron-renderer'
 };
