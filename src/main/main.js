@@ -44,9 +44,10 @@ ipcMain.handle('open-file-dialog', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile', 'multiSelections'],
     filters: [
-      { name: 'Media Files', extensions: ['mp4', 'webm', 'mkv', 'avi', 'mov', 'jpg', 'jpeg', 'png', 'gif', 'bmp'] },
+      { name: 'Media Files', extensions: ['mp4', 'webm', 'mkv', 'avi', 'mov', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'] },
       { name: 'Videos', extensions: ['mp4', 'webm', 'mkv', 'avi', 'mov'] },
-      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'] },
+      { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] },
+      { name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'] },
       { name: 'All Files', extensions: ['*'] }
     ]
   });
