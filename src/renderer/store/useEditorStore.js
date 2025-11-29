@@ -6,7 +6,20 @@ import { create } from 'zustand';
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 /**
- * Main editor store for Phase 2 timeline and preview features
+ * Default audio item settings
+ */
+const DEFAULT_AUDIO_ITEM = {
+  volume: 1.0,
+  pan: 0,
+  muted: false,
+  solo: false,
+  fadeIn: { enabled: false, duration: 0.5 },
+  fadeOut: { enabled: false, duration: 0.5 },
+  volumeKeyframes: [],
+};
+
+/**
+ * Main editor store for Phase 2 & 3 timeline and preview features
  */
 const useEditorStore = create((set, get) => ({
   // Media tracks - supports multiple lanes
@@ -34,6 +47,17 @@ const useEditorStore = create((set, get) => ({
     contrast: 0,     // -100 to 100
     saturation: 0,   // -100 to 100
   },
+  
+  // Phase 3: Transitions between clips
+  transitions: [],
+  
+  // Phase 3: Export state
+  exportJobs: [],
+  
+  // Phase 3: Project state
+  projectId: null,
+  projectName: 'Untitled Project',
+  isDirty: false,
   
   // Add media item to a track
   addMediaItem: (trackId, item) => {
@@ -364,7 +388,249 @@ const useEditorStore = create((set, get) => ({
       playhead: 0,
       duration: 0,
       isPlaying: false,
+      transitions: [],
+      isDirty: false,
     });
+  },
+  
+  // Phase 3: Audio item settings
+  updateAudioSettings: (trackId, itemId, settings) => {
+    set((state) => ({
+      tracks: state.tracks.map(track => {
+        if (track.id === trackId) {
+          return {
+            ...track,
+            items: track.items.map(item => {
+              if (item.id === itemId) {
+                return { ...item, ...settings };
+              }
+              return item;
+            }),
+          };
+        }
+        return track;
+      }),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Add volume keyframe
+  addVolumeKeyframe: (trackId, itemId, time, value, easing = 'linear') => {
+    set((state) => ({
+      tracks: state.tracks.map(track => {
+        if (track.id === trackId) {
+          return {
+            ...track,
+            items: track.items.map(item => {
+              if (item.id === itemId) {
+                const keyframes = item.volumeKeyframes || [];
+                const newKeyframes = keyframes.filter(kf => Math.abs(kf.time - time) > 0.01);
+                newKeyframes.push({ id: generateId(), time, value, easing });
+                newKeyframes.sort((a, b) => a.time - b.time);
+                return { ...item, volumeKeyframes: newKeyframes };
+              }
+              return item;
+            }),
+          };
+        }
+        return track;
+      }),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Remove volume keyframe
+  removeVolumeKeyframe: (trackId, itemId, keyframeId) => {
+    set((state) => ({
+      tracks: state.tracks.map(track => {
+        if (track.id === trackId) {
+          return {
+            ...track,
+            items: track.items.map(item => {
+              if (item.id === itemId) {
+                return {
+                  ...item,
+                  volumeKeyframes: (item.volumeKeyframes || []).filter(kf => kf.id !== keyframeId),
+                };
+              }
+              return item;
+            }),
+          };
+        }
+        return track;
+      }),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Toggle mute for audio item
+  toggleMute: (trackId, itemId) => {
+    set((state) => ({
+      tracks: state.tracks.map(track => {
+        if (track.id === trackId) {
+          return {
+            ...track,
+            items: track.items.map(item => {
+              if (item.id === itemId) {
+                return { ...item, muted: !item.muted };
+              }
+              return item;
+            }),
+          };
+        }
+        return track;
+      }),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Toggle solo for audio item
+  toggleSolo: (trackId, itemId) => {
+    set((state) => ({
+      tracks: state.tracks.map(track => {
+        if (track.id === trackId) {
+          return {
+            ...track,
+            items: track.items.map(item => {
+              if (item.id === itemId) {
+                return { ...item, solo: !item.solo };
+              }
+              return item;
+            }),
+          };
+        }
+        return track;
+      }),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Add transition between clips
+  addTransition: (transition) => {
+    const newTransition = {
+      id: generateId(),
+      type: 'crossfade',
+      duration: 1.0,
+      easing: 'linear',
+      ...transition,
+    };
+    
+    set((state) => ({
+      transitions: [...state.transitions, newTransition],
+      isDirty: true,
+    }));
+    
+    return newTransition.id;
+  },
+  
+  // Phase 3: Remove transition
+  removeTransition: (transitionId) => {
+    set((state) => ({
+      transitions: state.transitions.filter(t => t.id !== transitionId),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Update transition
+  updateTransition: (transitionId, updates) => {
+    set((state) => ({
+      transitions: state.transitions.map(t => 
+        t.id === transitionId ? { ...t, ...updates } : t
+      ),
+      isDirty: true,
+    }));
+  },
+  
+  // Phase 3: Get transitions for a clip
+  getTransitionsForClip: (clipId) => {
+    const state = get();
+    return state.transitions.filter(
+      t => t.fromClipId === clipId || t.toClipId === clipId
+    );
+  },
+  
+  // Phase 3: Set project info
+  setProjectInfo: (projectId, projectName) => {
+    set({ projectId, projectName, isDirty: false });
+  },
+  
+  // Phase 3: Mark project as dirty
+  markDirty: () => {
+    set({ isDirty: true });
+  },
+  
+  // Phase 3: Mark project as saved
+  markSaved: () => {
+    set({ isDirty: false });
+  },
+  
+  // Phase 3: Load project state
+  loadProject: (projectData) => {
+    set({
+      tracks: projectData.tracks || [
+        { id: 'video-track', name: 'Video Track', type: 'video', items: [] },
+        { id: 'audio-track', name: 'Audio Track', type: 'audio', items: [] },
+      ],
+      transitions: projectData.transitions || [],
+      filters: projectData.filters || { brightness: 0, contrast: 0, saturation: 0 },
+      projectId: projectData.id || null,
+      projectName: projectData.name || 'Untitled Project',
+      duration: projectData.duration || 0,
+      selectedItemId: null,
+      playhead: 0,
+      isPlaying: false,
+      isDirty: false,
+    });
+  },
+  
+  // Phase 3: Get project data for saving
+  getProjectData: () => {
+    const state = get();
+    return {
+      tracks: state.tracks,
+      transitions: state.transitions,
+      filters: state.filters,
+      duration: state.duration,
+    };
+  },
+  
+  // Phase 3: Split audio/video clip at playhead
+  splitClip: (trackId, itemId) => {
+    const state = get();
+    const track = state.tracks.find(t => t.id === trackId);
+    if (!track) return null;
+    
+    const item = track.items.find(i => i.id === itemId);
+    if (!item) return null;
+    
+    const splitTime = state.playhead - item.startTime;
+    if (splitTime <= 0 || splitTime >= item.duration) return null;
+    
+    const newItem = {
+      ...item,
+      id: generateId(),
+      name: `${item.name} (split)`,
+      startTime: state.playhead,
+      duration: item.duration - splitTime,
+    };
+    
+    set((state) => ({
+      tracks: state.tracks.map(t => {
+        if (t.id === trackId) {
+          return {
+            ...t,
+            items: [
+              ...t.items.map(i => i.id === itemId ? { ...i, duration: splitTime } : i),
+              newItem,
+            ],
+          };
+        }
+        return t;
+      }),
+      isDirty: true,
+    }));
+    
+    return newItem.id;
   },
 }));
 

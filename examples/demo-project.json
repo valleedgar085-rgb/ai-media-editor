@@ -1,0 +1,161 @@
+{
+  "version": "1.0.0",
+  "name": "Demo Project with Audio and Transitions",
+  "created": "2024-01-15T10:00:00.000Z",
+  "modified": "2024-01-15T10:30:00.000Z",
+  "settings": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "backgroundColor": "#000000"
+  },
+  "tracks": [
+    {
+      "id": "video-track",
+      "name": "Video Track",
+      "type": "video",
+      "items": [
+        {
+          "id": "video-1",
+          "name": "intro-clip.mp4",
+          "path": "assets/intro-clip.mp4",
+          "type": "video",
+          "startTime": 0,
+          "duration": 5,
+          "effects": {
+            "brightness": 10,
+            "contrast": 5,
+            "saturation": 0
+          }
+        },
+        {
+          "id": "video-2",
+          "name": "main-content.mp4",
+          "path": "assets/main-content.mp4",
+          "type": "video",
+          "startTime": 5,
+          "duration": 15,
+          "effects": {
+            "brightness": 0,
+            "contrast": 0,
+            "saturation": 0
+          }
+        },
+        {
+          "id": "video-3",
+          "name": "outro-clip.mp4",
+          "path": "assets/outro-clip.mp4",
+          "type": "video",
+          "startTime": 20,
+          "duration": 5,
+          "effects": {
+            "brightness": -10,
+            "contrast": 0,
+            "saturation": -20
+          }
+        }
+      ]
+    },
+    {
+      "id": "audio-track",
+      "name": "Audio Track",
+      "type": "audio",
+      "items": [
+        {
+          "id": "audio-1",
+          "name": "background-music.mp3",
+          "path": "assets/background-music.mp3",
+          "type": "audio",
+          "startTime": 0,
+          "duration": 25,
+          "volume": 0.7,
+          "pan": 0,
+          "muted": false,
+          "solo": false,
+          "fadeIn": {
+            "enabled": true,
+            "duration": 2,
+            "type": "linear"
+          },
+          "fadeOut": {
+            "enabled": true,
+            "duration": 3,
+            "type": "linear"
+          },
+          "volumeKeyframes": [
+            {
+              "id": "kf-1",
+              "time": 0,
+              "value": 0.3,
+              "easing": "linear"
+            },
+            {
+              "id": "kf-2",
+              "time": 5,
+              "value": 0.7,
+              "easing": "ease-out"
+            },
+            {
+              "id": "kf-3",
+              "time": 20,
+              "value": 0.7,
+              "easing": "linear"
+            },
+            {
+              "id": "kf-4",
+              "time": 25,
+              "value": 0.1,
+              "easing": "ease-in"
+            }
+          ]
+        },
+        {
+          "id": "audio-2",
+          "name": "voiceover.wav",
+          "path": "assets/voiceover.wav",
+          "type": "audio",
+          "startTime": 5,
+          "duration": 14,
+          "volume": 1.0,
+          "pan": 0,
+          "muted": false,
+          "solo": false,
+          "fadeIn": {
+            "enabled": true,
+            "duration": 0.5,
+            "type": "linear"
+          },
+          "fadeOut": {
+            "enabled": true,
+            "duration": 0.5,
+            "type": "linear"
+          },
+          "volumeKeyframes": []
+        }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "transition-1",
+      "type": "crossfade",
+      "duration": 1.0,
+      "easing": "ease-in-out",
+      "fromClipId": "video-1",
+      "toClipId": "video-2"
+    },
+    {
+      "id": "transition-2",
+      "type": "fade_black",
+      "duration": 1.5,
+      "easing": "linear",
+      "fromClipId": "video-2",
+      "toClipId": "video-3"
+    }
+  ],
+  "filters": {
+    "brightness": 0,
+    "contrast": 0,
+    "saturation": 0
+  }
+}

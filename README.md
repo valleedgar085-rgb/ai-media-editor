@@ -57,6 +57,12 @@ AI-powered media editor desktop application built with Electron and React.
 | + / = | Zoom in |
 | - / _ | Zoom out |
 | Delete/Backspace | Remove selected item |
+| Ctrl/Cmd + Z | Undo (Phase 3) |
+| Ctrl/Cmd + Shift + Z | Redo (Phase 3) |
+| Ctrl/Cmd + S | Save project (Phase 3) |
+| Ctrl/Cmd + E | Export (Phase 3) |
+| S | Split clip at playhead (Phase 3) |
+| M | Mute selected audio clip (Phase 3) |
 
 ## Prerequisites
 
@@ -130,6 +136,13 @@ ai-media-editor/
 │   └── renderer/                # React frontend
 │       ├── components/          # React components
 │       │   ├── DragDropZone.js  # File upload component
+│       │   ├── Audio/           # Audio components (Phase 3)
+│       │   │   ├── AudioControls.js
+│       │   │   └── WaveformDisplay.js
+│       │   ├── Export/          # Export components (Phase 3)
+│       │   │   └── ExportPanel.js
+│       │   ├── Keyframes/       # Keyframe editor (Phase 3)
+│       │   │   └── KeyframeEditor.js
 │       │   ├── Preview/         # Preview player components (Phase 2)
 │       │   │   ├── PreviewPlayer.js
 │       │   │   ├── PlaybackControls.js
@@ -138,7 +151,14 @@ ai-media-editor/
 │       │       ├── TimelinePanel.js
 │       │       ├── TimelineTrack.js
 │       │       └── TimelineItem.js
-│       ├── store/               # State management (Phase 2)
+│       ├── modules/             # Core modules (Phase 3)
+│       │   ├── audio/           # Audio clip model and waveform
+│       │   ├── export/          # Export pipeline and job management
+│       │   ├── history/         # Undo/redo manager
+│       │   ├── keyframes/       # Keyframe track and interpolation
+│       │   ├── project/         # Project save/load and autosave
+│       │   └── transitions/     # Transition effects
+│       ├── store/               # State management (Phase 2+)
 │       │   └── useEditorStore.js
 │       ├── utils/               # Utility functions (Phase 2)
 │       │   ├── thumbnailUtils.js
@@ -146,8 +166,16 @@ ai-media-editor/
 │       ├── App.js               # Main App component
 │       ├── index.js             # React entry point
 │       └── styles.css           # Application styles
-├── tests/                       # Unit tests (Phase 2)
-│   └── timeline.test.js
+├── tests/                       # Unit tests
+│   ├── timeline.test.js         # Timeline store tests
+│   ├── audio.test.js            # Audio module tests (Phase 3)
+│   ├── export.test.js           # Export module tests (Phase 3)
+│   ├── history.test.js          # History module tests (Phase 3)
+│   ├── keyframes.test.js        # Keyframe module tests (Phase 3)
+│   └── transitions.test.js      # Transition module tests (Phase 3)
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # CI/CD workflow (Phase 3)
 ├── public/
 │   └── index.html               # HTML template
 ├── dist/                        # Webpack build output
@@ -177,11 +205,68 @@ ai-media-editor/
 - **WebGL** - GPU-accelerated rendering
 - **Jest** - Testing framework
 
-## Phase 3 (Coming Soon)
+## Phase 3 (Export, Audio & Advanced Timeline)
 
-- Backend AI integrations
-- Advanced video editing features
-- Export and rendering pipeline
+### Export Pipeline
+- **Video Export**
+  - Export to MP4 (H.264 baseline profile) and WebM (VP9)
+  - Quality presets: Low (480p), Medium (720p), High (1080p)
+  - Progress tracking with percentage and ETA
+  - Configurable server-side export fallback for large projects
+  - Export job queue management
+
+### Advanced Audio Support
+- **Audio Track Model**
+  - Volume control with keyframe automation
+  - Pan control (-1 left to +1 right)
+  - Fade in/out effects with configurable duration and curve type
+  - Mute and Solo per clip
+  - Clip-level gain adjustment
+
+- **Waveform Rendering**
+  - WebAudio-based waveform generation
+  - Canvas rendering with zoom/scroll synchronization
+  - Real-time playhead indicator
+
+- **Audio Edit Operations**
+  - Trim audio clips
+  - Split clips at playhead
+  - Volume keyframes with easing presets
+
+### Transitions System
+- **Built-in Transitions**
+  - Crossfade (blend between clips)
+  - Wipe (left, right, up, down)
+  - Fade to Black/White
+  - Configurable duration and easing curves
+
+### Keyframe Animation
+- **Keyframe Infrastructure**
+  - Property keyframes: opacity, scale, rotation, position
+  - Effect keyframes: brightness, contrast, saturation
+  - Easing presets: linear, ease-in, ease-out, ease-in-out, elastic, bounce
+  - Visual keyframe editor panel
+
+### Undo/Redo History
+- Full undo/redo support for timeline edits
+- Batch operations for grouped changes
+- History stack with configurable size limit
+
+### Project Persistence
+- **Save/Load Projects**
+  - JSON-based project format
+  - Asset references with relative paths
+  - Timeline state, keyframes, and settings preservation
+
+- **Autosave**
+  - Automatic saving every 30 seconds
+  - Configurable autosave intervals
+  - Revert to last saved option
+
+### Continuous Integration
+- GitHub Actions workflow for CI/CD
+- Automated testing on push and PR
+- Build verification for Node.js 18.x and 20.x
 
 ## License
 
