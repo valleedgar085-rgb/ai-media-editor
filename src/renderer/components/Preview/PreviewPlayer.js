@@ -1,224 +1,183 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
-import useEditorStore from '../../store/useEditorStore';
-import WebGLRenderer from '../../utils/WebGLRenderer';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { initWebGL, renderFrame, cleanupWebGL } from './webglRenderer';
 import PlaybackControls from './PlaybackControls';
 import FilterControls from './FilterControls';
 
-// Sync thresholds in seconds
-const AUDIO_SYNC_THRESHOLD = 0.3;
-const VIDEO_SYNC_THRESHOLD = 0.1;
+// Sync threshold in seconds - prevents excessive seeking during playback
+const MEDIA_SYNC_THRESHOLD = 0.3;
 
-/**
- * PreviewPlayer component - plays selected media with WebGL rendering
- */
-function PreviewPlayer() {
+function PreviewPlayer({
+  tracks,
+  currentTime,
+  duration,
+  isPlaying,
+  playbackRate,
+  filters,
+  onTimeChange,
+  onPlayingChange,
+  onPlaybackRateChange,
+  onFilterChange
+}) {
   const canvasRef = useRef(null);
+  const webglContextRef = useRef(null);
   const videoRef = useRef(null);
-  const imageRef = useRef(null);
-  const rendererRef = useRef(null);
-  const animationFrameRef = useRef(null);
   const audioRef = useRef(null);
-  
-  const [canvasSize, setCanvasSize] = useState({ width: 960, height: 540 });
-  const [hasWebGL, setHasWebGL] = useState(true);
-  
-  const {
-    tracks,
-    selectedItemId,
-    playhead,
-    isPlaying,
-    playbackRate,
-    filters,
-    duration,
-    setPlayhead,
-    pause,
-  } = useEditorStore();
-  
-  // Find the selected item
-  const selectedItem = useCallback(() => {
-    for (const track of tracks) {
-      const item = track.items.find(i => i.id === selectedItemId);
-      if (item) return item;
-    }
-    return null;
-  }, [tracks, selectedItemId])();
-  
-  // Get current media at playhead position
-  const getCurrentMedia = useCallback(() => {
-    const videoTrack = tracks.find(t => t.type === 'video');
-    if (!videoTrack) return null;
-    
-    // Find item that contains the current playhead position
-    const currentItem = videoTrack.items.find(item => {
-      const endTime = item.startTime + item.duration;
-      return playhead >= item.startTime && playhead < endTime;
-    });
-    
-    return currentItem;
-  }, [tracks, playhead]);
-  
-  // Get current audio at playhead position
-  const getCurrentAudio = useCallback(() => {
-    const audioTrack = tracks.find(t => t.type === 'audio');
-    if (!audioTrack) return null;
-    
-    const currentAudio = audioTrack.items.find(item => {
-      const endTime = item.startTime + item.duration;
-      return playhead >= item.startTime && playhead < endTime;
-    });
-    
-    return currentAudio;
-  }, [tracks, playhead]);
-  
-  // Initialize WebGL renderer
+  const imageRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const lastTimeRef = useRef(0);
+
+  const [currentVideoItem, setCurrentVideoItem] = useState(null);
+  const [currentAudioItem, setCurrentAudioItem] = useState(null);
+  const [mediaLoaded, setMediaLoaded] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Initialize WebGL
   useEffect(() => {
-    if (canvasRef.current && !rendererRef.current) {
-      rendererRef.current = new WebGLRenderer(canvasRef.current);
-      setHasWebGL(rendererRef.current.isWebGLAvailable());
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    webglContextRef.current = initWebGL(canvas);
+    if (!webglContextRef.current) {
+      setError('WebGL initialization failed');
     }
-    
+
     return () => {
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-        rendererRef.current = null;
+      if (webglContextRef.current) {
+        cleanupWebGL(webglContextRef.current);
+        webglContextRef.current = null;
       }
     };
   }, []);
-  
-  // Update renderer size
+
+  // Find current media items based on time
   useEffect(() => {
-    if (rendererRef.current) {
-      rendererRef.current.setSize(canvasSize.width, canvasSize.height);
-    }
-  }, [canvasSize]);
-  
-  // Update filters in renderer
-  useEffect(() => {
-    if (rendererRef.current) {
-      rendererRef.current.setFilters(filters);
-    }
-  }, [filters]);
-  
-  // Handle video element
-  useEffect(() => {
-    const currentMedia = getCurrentMedia();
-    
-    if (currentMedia && videoRef.current) {
-      const isVideo = currentMedia.type === 'video' || currentMedia.path?.match(/\.(mp4|webm|mkv|avi|mov)$/i);
-      
-      if (isVideo && videoRef.current.src !== currentMedia.path) {
-        videoRef.current.src = currentMedia.path;
-        videoRef.current.load();
+    const videoTrack = tracks.find(t => t.type === 'video');
+    const audioTrack = tracks.find(t => t.type === 'audio');
+
+    if (videoTrack) {
+      const item = videoTrack.items.find(i => 
+        currentTime >= i.startTime && currentTime < i.startTime + i.duration
+      );
+      if (item?.id !== currentVideoItem?.id) {
+        setCurrentVideoItem(item || null);
+        setMediaLoaded(false);
       }
     }
-  }, [getCurrentMedia]);
-  
-  // Handle image element
-  useEffect(() => {
-    const currentMedia = getCurrentMedia();
-    
-    if (currentMedia && imageRef.current) {
-      const isImage = currentMedia.type === 'image' || currentMedia.path?.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
-      
-      if (isImage && imageRef.current.src !== currentMedia.path) {
-        imageRef.current.src = currentMedia.path;
+
+    if (audioTrack) {
+      const item = audioTrack.items.find(i => 
+        currentTime >= i.startTime && currentTime < i.startTime + i.duration
+      );
+      if (item?.id !== currentAudioItem?.id) {
+        setCurrentAudioItem(item || null);
       }
     }
-  }, [getCurrentMedia]);
-  
-  // Handle audio sync
+  }, [currentTime, tracks, currentVideoItem?.id, currentAudioItem?.id]);
+
+  // Load video or image when current item changes
   useEffect(() => {
-    const currentAudio = getCurrentAudio();
-    
-    if (audioRef.current) {
-      if (currentAudio) {
-        if (audioRef.current.src !== currentAudio.path) {
-          audioRef.current.src = currentAudio.path;
-          audioRef.current.load();
-        }
-        
-        // Calculate local time within the audio clip
-        const localTime = playhead - currentAudio.startTime;
-        
-        if (Math.abs(audioRef.current.currentTime - localTime) > AUDIO_SYNC_THRESHOLD) {
-          audioRef.current.currentTime = localTime;
-        }
-        
-        audioRef.current.playbackRate = playbackRate;
-        
-        if (isPlaying && audioRef.current.paused) {
-          audioRef.current.play().catch(() => {});
-        } else if (!isPlaying && !audioRef.current.paused) {
-          audioRef.current.pause();
-        }
-      } else {
+    if (!currentVideoItem) {
+      setMediaLoaded(false);
+      return;
+    }
+
+    const isVideo = currentVideoItem.type === 'video' || 
+      currentVideoItem.path?.match(/\.(mp4|webm|mkv|avi|mov)$/i);
+
+    if (isVideo) {
+      // Load video
+      if (!videoRef.current) {
+        videoRef.current = document.createElement('video');
+        videoRef.current.crossOrigin = 'anonymous';
+        videoRef.current.muted = true; // Mute video, use separate audio track
+        videoRef.current.playsInline = true;
+      }
+
+      videoRef.current.src = currentVideoItem.path;
+      videoRef.current.load();
+      videoRef.current.onloadeddata = () => {
+        setMediaLoaded(true);
+        setError(null);
+      };
+      videoRef.current.onerror = () => {
+        setError('Failed to load video');
+        setMediaLoaded(false);
+      };
+
+      imageRef.current = null;
+    } else {
+      // Load image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        imageRef.current = img;
+        setMediaLoaded(true);
+        setError(null);
+      };
+      img.onerror = () => {
+        setError('Failed to load image');
+        setMediaLoaded(false);
+      };
+      img.src = currentVideoItem.path;
+
+      videoRef.current = null;
+    }
+  }, [currentVideoItem]);
+
+  // Handle audio track
+  useEffect(() => {
+    if (!currentAudioItem) {
+      if (audioRef.current) {
         audioRef.current.pause();
-      }
-    }
-  }, [getCurrentAudio, playhead, isPlaying, playbackRate]);
-  
-  // Playback loop using requestAnimationFrame
-  useEffect(() => {
-    if (!isPlaying) {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
+        audioRef.current.src = '';
       }
       return;
     }
-    
-    let lastTime = performance.now();
-    
-    const tick = (currentTime) => {
-      const deltaTime = (currentTime - lastTime) / 1000;
-      lastTime = currentTime;
-      
-      const newPlayhead = playhead + deltaTime * playbackRate;
-      
-      if (newPlayhead >= duration) {
-        setPlayhead(duration);
-        pause();
-        return;
-      }
-      
-      setPlayhead(newPlayhead);
-      animationFrameRef.current = requestAnimationFrame(tick);
-    };
-    
-    animationFrameRef.current = requestAnimationFrame(tick);
-    
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isPlaying, playhead, duration, playbackRate, setPlayhead, pause]);
-  
-  // Render frame
-  useEffect(() => {
-    const currentMedia = getCurrentMedia();
-    
-    if (!rendererRef.current || !currentMedia) {
-      // Clear canvas if no media
-      if (canvasRef.current) {
-        const ctx = canvasRef.current.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#1a1a2e';
-          ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
-        }
-      }
-      return;
+
+    if (!audioRef.current) {
+      audioRef.current = document.createElement('audio');
+      audioRef.current.crossOrigin = 'anonymous';
     }
+
+    audioRef.current.src = currentAudioItem.path;
+    audioRef.current.load();
+  }, [currentAudioItem]);
+
+  // Sync audio with playback
+  useEffect(() => {
+    if (!audioRef.current || !currentAudioItem) return;
+
+    const audioTime = currentTime - currentAudioItem.startTime;
     
-    const isVideo = currentMedia.type === 'video' || currentMedia.path?.match(/\.(mp4|webm|mkv|avi|mov)$/i);
-    
-    if (isVideo && videoRef.current && videoRef.current.readyState >= 2) {
-      // Calculate local time within the video clip
-      const localTime = playhead - currentMedia.startTime;
+    // Use threshold to prevent excessive seeking during playback
+    if (Math.abs(audioRef.current.currentTime - audioTime) > MEDIA_SYNC_THRESHOLD) {
+      audioRef.current.currentTime = Math.max(0, audioTime);
+    }
+
+    audioRef.current.playbackRate = playbackRate;
+
+    if (isPlaying) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, currentTime, currentAudioItem, playbackRate]);
+
+  // Render loop
+  const render = useCallback(() => {
+    if (!webglContextRef.current || !canvasRef.current) return;
+
+    let source = null;
+
+    if (videoRef.current && videoRef.current.readyState >= 2) {
+      // Sync video time
+      const videoTime = currentVideoItem 
+        ? currentTime - currentVideoItem.startTime 
+        : 0;
       
-      // Sync video position
-      if (Math.abs(videoRef.current.currentTime - localTime) > VIDEO_SYNC_THRESHOLD) {
-        videoRef.current.currentTime = Math.max(0, localTime);
+      // Use threshold to prevent excessive seeking during playback
+      if (Math.abs(videoRef.current.currentTime - videoTime) > MEDIA_SYNC_THRESHOLD) {
+        videoRef.current.currentTime = Math.max(0, videoTime);
       }
       
       videoRef.current.playbackRate = playbackRate;
@@ -229,116 +188,128 @@ function PreviewPlayer() {
         videoRef.current.pause();
       }
       
-      // Render video frame to canvas
-      rendererRef.current.render(videoRef.current);
-    } else if (!isVideo && imageRef.current && imageRef.current.complete) {
-      // Render image to canvas
-      rendererRef.current.render(imageRef.current);
+      source = videoRef.current;
+    } else if (imageRef.current) {
+      source = imageRef.current;
     }
-  }, [getCurrentMedia, playhead, isPlaying, playbackRate, canvasSize]);
-  
-  // Handle resize
+
+    if (source) {
+      try {
+        renderFrame(webglContextRef.current, source, filters);
+      } catch (err) {
+        console.error('Render error:', err);
+      }
+    } else {
+      // Clear canvas when no source
+      const { gl } = webglContextRef.current;
+      gl.clearColor(0.1, 0.1, 0.15, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+  }, [currentTime, filters, isPlaying, playbackRate, currentVideoItem]);
+
+  // Animation loop for playback
   useEffect(() => {
-    const handleResize = () => {
-      const container = canvasRef.current?.parentElement;
-      if (container) {
-        const maxWidth = container.clientWidth - 40;
-        const maxHeight = container.clientHeight - 200;
-        
-        // Maintain 16:9 aspect ratio
-        const aspectRatio = 16 / 9;
-        let width = maxWidth;
-        let height = width / aspectRatio;
-        
-        if (height > maxHeight) {
-          height = maxHeight;
-          width = height * aspectRatio;
-        }
-        
-        setCanvasSize({
-          width: Math.floor(width),
-          height: Math.floor(height),
-        });
+    if (!isPlaying) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      render();
+      return;
+    }
+
+    lastTimeRef.current = performance.now();
+
+    const animate = (timestamp) => {
+      const deltaTime = (timestamp - lastTimeRef.current) / 1000;
+      lastTimeRef.current = timestamp;
+
+      const newTime = currentTime + deltaTime * playbackRate;
+      
+      if (newTime >= duration) {
+        onTimeChange(0);
+        onPlayingChange(false);
+        return;
+      }
+
+      onTimeChange(newTime);
+      render();
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
-    
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  const currentMedia = getCurrentMedia();
-  
+  }, [isPlaying, currentTime, duration, playbackRate, onTimeChange, onPlayingChange, render]);
+
+  // Render when filters or time changes (not during playback)
+  useEffect(() => {
+    if (!isPlaying) {
+      render();
+    }
+  }, [filters, render, isPlaying, currentTime]);
+
+  const handlePlayPause = useCallback(() => {
+    if (duration === 0) return;
+    onPlayingChange(!isPlaying);
+  }, [isPlaying, duration, onPlayingChange]);
+
+  const handleSeek = useCallback((time) => {
+    onTimeChange(time);
+  }, [onTimeChange]);
+
+  const handleFrameStep = useCallback((direction) => {
+    // Step by 1/30th of a second (one frame at 30fps)
+    const frameTime = 1 / 30;
+    const newTime = Math.max(0, Math.min(currentTime + direction * frameTime, duration));
+    onTimeChange(newTime);
+  }, [currentTime, duration, onTimeChange]);
+
+  const hasMedia = tracks.some(t => t.items.length > 0);
+
   return (
     <div className="preview-player">
-      {/* Canvas for rendering */}
       <div className="preview-canvas-container">
-        <canvas
-          ref={canvasRef}
-          className="preview-canvas"
-          width={canvasSize.width}
-          height={canvasSize.height}
-        />
-        
-        {/* Hidden video element for loading video frames */}
-        <video
-          ref={videoRef}
-          className="hidden-media"
-          preload="auto"
-          muted
-          playsInline
-        />
-        
-        {/* Hidden image element for loading images */}
-        <img
-          ref={imageRef}
-          className="hidden-media"
-          alt=""
-        />
-        
-        {/* Hidden audio element for audio playback */}
-        <audio
-          ref={audioRef}
-          className="hidden-media"
-          preload="auto"
-        />
-        
-        {/* Empty state */}
-        {!currentMedia && duration === 0 && (
+        {!hasMedia ? (
           <div className="preview-empty">
-            <div className="preview-icon">🎬</div>
+            <div className="preview-empty-icon">🎬</div>
             <p>Add media to the timeline to preview</p>
           </div>
-        )}
-        
-        {/* No media at playhead */}
-        {!currentMedia && duration > 0 && (
-          <div className="preview-empty">
-            <div className="preview-icon">⏸️</div>
-            <p>No media at current playhead position</p>
+        ) : error ? (
+          <div className="preview-error">
+            <div className="preview-error-icon">⚠️</div>
+            <p>{error}</p>
           </div>
-        )}
-        
-        {/* WebGL info */}
-        {!hasWebGL && (
-          <div className="webgl-warning">
-            WebGL not available. Using fallback rendering.
-          </div>
-        )}
-        
-        {/* Current media info */}
-        {currentMedia && (
-          <div className="preview-media-info">
-            <span className="media-name">{currentMedia.name}</span>
-          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className="preview-canvas"
+            width={640}
+            height={360}
+          />
         )}
       </div>
-      
-      {/* Playback controls */}
-      <PlaybackControls />
-      
-      {/* Filter controls */}
-      <FilterControls />
+
+      <PlaybackControls
+        isPlaying={isPlaying}
+        currentTime={currentTime}
+        duration={duration}
+        playbackRate={playbackRate}
+        onPlayPause={handlePlayPause}
+        onSeek={handleSeek}
+        onFrameStep={handleFrameStep}
+        onPlaybackRateChange={onPlaybackRateChange}
+      />
+
+      <FilterControls
+        filters={filters}
+        onFilterChange={onFilterChange}
+      />
     </div>
   );
 }

@@ -13,8 +13,7 @@
     "dist:win": "npm run build:renderer && electron-builder --win",
     "dist:mac": "npm run build:renderer && electron-builder --mac",
     "dist:linux": "npm run build:renderer && electron-builder --linux",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "jest"
   },
   "keywords": [
     "electron",
@@ -32,7 +31,7 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
-    "zustand": "^5.0.8"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.3",
@@ -41,10 +40,12 @@
     "@babel/preset-typescript": "^7.28.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "babel-jest": "^30.2.0",
     "babel-loader": "^9.1.3",
     "css-loader": "^6.8.1",
     "electron-builder": "^24.6.4",
     "html-webpack-plugin": "^5.5.3",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "style-loader": "^3.3.3",

@@ -11,52 +11,30 @@ AI-powered media editor desktop application built with Electron and React.
 - Preview panel for media playback
 - Cross-platform support (Windows, macOS, Linux)
 
-### Phase 2 (Timeline & Preview)
+### Phase 2 Features (NEW)
+
 - **Enhanced Timeline Editor**
-  - Horizontally scrollable tracks with thumbnails
-  - Drag-and-drop reordering within and between tracks (react-dnd)
-  - Zoom controls (fit, zoom in, zoom out) with configurable time-to-pixel ratio
+  - Drag-and-drop reordering of media items using react-dnd
+  - Zoom controls (fit, zoom in, zoom out) for timeline navigation
   - Playhead with current time display
-  - Video and Audio track lanes
-  
-- **Media Upload & Thumbnails**
-  - Automatic thumbnail generation for images and videos
-  - Thumbnails displayed on timeline items
-  - Lazy loading for performance with many items
-  
-- **Preview Player with WebGL Rendering**
-  - GPU-accelerated Canvas + WebGL rendering
-  - Playback controls: play, pause, seek, frame-step, playback rate
-  - Target 1080p at 30-60fps (hardware dependent)
-  - Real-time filter preview
-  
-- **Filter Controls**
-  - Brightness adjustment (-100 to +100)
-  - Contrast adjustment (-100 to +100)
-  - Saturation adjustment (-100 to +100)
-  - Filter presets (Vivid, Dramatic, B&W, Vintage)
-  
-- **Audio Track Support**
+  - Multiple track support (Video/Image track and Audio track)
+  - Real-time thumbnail generation for uploaded media
+
+- **WebGL Preview Player**
+  - GPU-accelerated rendering using WebGL shaders
+  - Basic playback controls (play, pause, seek, frame-step)
+  - Variable playback rate (0.25x to 4x speed)
+  - Real-time filter controls (Brightness, Contrast, Saturation)
+
+- **Audio Support**
   - Dedicated audio track lane
-  - Audio sync with preview playhead
-  
+  - Audio file upload (MP3, WAV, OGG, AAC, M4A)
+  - Synchronized audio playback with video timeline
+
 - **Performance Optimizations**
-  - Lazy loading thumbnails and frames
+  - Lazy loading of media thumbnails
   - requestAnimationFrame-based playback loop
-  - Efficient state management with Zustand
-
-## Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| Space | Play/Pause |
-| Left Arrow | Step backward one frame |
-| Right Arrow | Step forward one frame |
-| Shift+Left | Go to start |
-| Shift+Right | Go to end |
-| + / = | Zoom in |
-| - / _ | Zoom out |
-| Delete/Backspace | Remove selected item |
+  - Efficient WebGL texture updates
 
 ## Prerequisites
 
@@ -90,9 +68,6 @@ npm run electron
 
 ```bash
 npm test
-
-# Watch mode
-npm run test:watch
 ```
 
 ## Building for Distribution
@@ -129,33 +104,59 @@ ai-media-editor/
 │   │   └── preload.js           # Preload script for IPC
 │   └── renderer/                # React frontend
 │       ├── components/          # React components
-│       │   ├── DragDropZone.js  # File upload component
-│       │   ├── Preview/         # Preview player components (Phase 2)
-│       │   │   ├── PreviewPlayer.js
-│       │   │   ├── PlaybackControls.js
-│       │   │   └── FilterControls.js
-│       │   └── Timeline/        # Timeline components (Phase 2)
-│       │       ├── TimelinePanel.js
-│       │       ├── TimelineTrack.js
-│       │       └── TimelineItem.js
+│       │   ├── DragDropZone.js  # File upload zone
+│       │   ├── Timeline/        # Timeline components (Phase 2)
+│       │   │   ├── TimelineEditor.js
+│       │   │   ├── Track.js
+│       │   │   ├── TrackItem.js
+│       │   │   ├── TimelineRuler.js
+│       │   │   └── ZoomControls.js
+│       │   └── Preview/         # Preview components (Phase 2)
+│       │       ├── PreviewPlayer.js
+│       │       ├── PlaybackControls.js
+│       │       ├── FilterControls.js
+│       │       └── webglRenderer.js
 │       ├── store/               # State management (Phase 2)
-│       │   └── useEditorStore.js
-│       ├── utils/               # Utility functions (Phase 2)
-│       │   ├── thumbnailUtils.js
-│       │   └── WebGLRenderer.js
+│       │   ├── mediaStore.js
+│       │   └── thumbnailGenerator.js
 │       ├── App.js               # Main App component
 │       ├── index.js             # React entry point
 │       └── styles.css           # Application styles
 ├── tests/                       # Unit tests (Phase 2)
-│   └── timeline.test.js
+│   ├── setupTests.js
+│   └── Timeline.test.js
 ├── public/
 │   └── index.html               # HTML template
 ├── dist/                        # Webpack build output
 ├── release/                     # Electron Builder output
 ├── webpack.config.js            # Webpack configuration
-├── jest.config.js               # Jest configuration
+├── jest.config.js               # Jest test configuration
 └── package.json                 # Project configuration
 ```
+
+## Phase 2 Usage Guide
+
+### Timeline Editor
+
+1. **Add Media**: Drag and drop files onto the upload zone or click "Browse Files"
+2. **Reorder Items**: Drag items within a track to reorder them
+3. **Zoom Timeline**: Use the zoom controls (+/-) to zoom in/out, or click ⬚ to fit all content
+4. **Seek**: Click on the timeline ruler to move the playhead
+
+### Preview Player
+
+1. **Playback**: Click play/pause or use the seek slider
+2. **Frame Step**: Use ⏮/⏭ buttons to step through frames
+3. **Speed**: Select playback rate from the dropdown (0.25x to 4x)
+
+### Filters
+
+Adjust real-time filters in the preview:
+- **Brightness**: 0-200% (100% is normal)
+- **Contrast**: 0-200% (100% is normal)  
+- **Saturation**: 0-200% (100% is normal)
+
+Click "Reset" to restore default values.
 
 ## Supported File Formats
 
@@ -182,6 +183,15 @@ ai-media-editor/
 - Backend AI integrations
 - Advanced video editing features
 - Export and rendering pipeline
+
+### Audio (Phase 2)
+- MP3, WAV, OGG, AAC, M4A
+
+## Roadmap
+
+- **Phase 1** ✅: Basic Electron/React setup, file upload, simple preview
+- **Phase 2** ✅: Timeline editor, WebGL preview, filters, audio support
+- **Phase 3** (Upcoming): AI integrations, FFmpeg export, advanced effects
 
 ## License
 

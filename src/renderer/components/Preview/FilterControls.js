@@ -1,123 +1,79 @@
-import React, { useCallback } from 'react';
-import useEditorStore from '../../store/useEditorStore';
+import React from 'react';
 
-/**
- * FilterControls component - UI controls for brightness, contrast, saturation
- */
-function FilterControls() {
-  const { filters, setFilter, resetFilters } = useEditorStore();
-  
-  const handleFilterChange = useCallback((filterName, value) => {
-    setFilter(filterName, parseInt(value, 10));
-  }, [setFilter]);
-  
+function FilterControls({ filters, onFilterChange }) {
+  const handleChange = (name, value) => {
+    onFilterChange({ [name]: parseInt(value, 10) });
+  };
+
+  const handleReset = () => {
+    onFilterChange({
+      brightness: 100,
+      contrast: 100,
+      saturation: 100
+    });
+  };
+
   const filterConfigs = [
-    {
-      name: 'brightness',
-      label: 'Brightness',
+    { 
+      name: 'brightness', 
+      label: 'Brightness', 
       icon: '☀️',
-      value: filters.brightness,
+      min: 0, 
+      max: 200 
     },
-    {
-      name: 'contrast',
-      label: 'Contrast',
+    { 
+      name: 'contrast', 
+      label: 'Contrast', 
       icon: '◐',
-      value: filters.contrast,
+      min: 0, 
+      max: 200 
     },
-    {
-      name: 'saturation',
-      label: 'Saturation',
+    { 
+      name: 'saturation', 
+      label: 'Saturation', 
       icon: '🎨',
-      value: filters.saturation,
-    },
+      min: 0, 
+      max: 200 
+    }
   ];
-  
-  const hasChanges = filters.brightness !== 0 || filters.contrast !== 0 || filters.saturation !== 0;
-  
+
+  const isDefault = filters.brightness === 100 && 
+                   filters.contrast === 100 && 
+                   filters.saturation === 100;
+
   return (
-    <div className="filter-controls-panel">
+    <div className="filter-controls">
       <div className="filter-header">
         <h4>Filters</h4>
-        {hasChanges && (
-          <button className="reset-btn" onClick={resetFilters} title="Reset all filters">
-            Reset
-          </button>
-        )}
+        <button 
+          className="filter-reset-btn"
+          onClick={handleReset}
+          disabled={isDefault}
+          title="Reset all filters"
+        >
+          Reset
+        </button>
       </div>
       
-      <div className="filter-sliders">
-        {filterConfigs.map((filter) => (
-          <div key={filter.name} className="filter-slider-group">
-            <div className="filter-label">
-              <span className="filter-icon">{filter.icon}</span>
-              <span className="filter-name">{filter.label}</span>
-              <span className="filter-value">{filter.value}</span>
-            </div>
-            <input
-              type="range"
-              className="filter-slider"
-              min={-100}
-              max={100}
-              value={filter.value}
-              onChange={(e) => handleFilterChange(filter.name, e.target.value)}
-            />
-            <div className="slider-ticks">
-              <span>-100</span>
-              <span>0</span>
-              <span>+100</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {/* Quick presets */}
-      <div className="filter-presets">
-        <span className="preset-label">Presets:</span>
-        <button
-          className="preset-btn"
-          onClick={() => {
-            setFilter('brightness', 15);
-            setFilter('contrast', 10);
-            setFilter('saturation', 20);
-          }}
-          title="Vivid"
-        >
-          Vivid
-        </button>
-        <button
-          className="preset-btn"
-          onClick={() => {
-            setFilter('brightness', -10);
-            setFilter('contrast', 20);
-            setFilter('saturation', -30);
-          }}
-          title="Dramatic"
-        >
-          Dramatic
-        </button>
-        <button
-          className="preset-btn"
-          onClick={() => {
-            setFilter('brightness', 5);
-            setFilter('contrast', -5);
-            setFilter('saturation', -100);
-          }}
-          title="B&W"
-        >
-          B&W
-        </button>
-        <button
-          className="preset-btn"
-          onClick={() => {
-            setFilter('brightness', 10);
-            setFilter('contrast', -10);
-            setFilter('saturation', -20);
-          }}
-          title="Vintage"
-        >
-          Vintage
-        </button>
-      </div>
+      {filterConfigs.map(config => (
+        <div key={config.name} className="filter-row">
+          <label className="filter-label">
+            <span className="filter-icon">{config.icon}</span>
+            {config.label}
+          </label>
+          <input
+            type="range"
+            className="filter-slider"
+            min={config.min}
+            max={config.max}
+            value={filters[config.name]}
+            onChange={(e) => handleChange(config.name, e.target.value)}
+          />
+          <span className="filter-value">
+            {filters[config.name]}%
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
