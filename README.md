@@ -4,6 +4,7 @@ AI-powered media editor desktop application built with Electron and React.
 
 ## Features
 
+### Phase 1 (Foundation)
 - Desktop application for video and image editing
 - Drag & drop file upload support
 - Timeline UI for media organization
@@ -163,7 +164,25 @@ Click "Reset" to restore default values.
 - MP4, WebM, MKV, AVI, MOV
 
 ### Images
-- JPG, JPEG, PNG, GIF, BMP
+- JPG, JPEG, PNG, GIF, BMP, WebP
+
+### Audio (Phase 2)
+- MP3, WAV, OGG, AAC, M4A, FLAC
+
+## Technology Stack
+
+- **Electron** - Desktop application framework
+- **React** - UI framework
+- **Zustand** - State management
+- **react-dnd** - Drag and drop functionality
+- **WebGL** - GPU-accelerated rendering
+- **Jest** - Testing framework
+
+## Phase 3 (Coming Soon)
+
+- Backend AI integrations
+- Advanced video editing features
+- Export and rendering pipeline
 
 ### Audio (Phase 2)
 - MP3, WAV, OGG, AAC, M4A
