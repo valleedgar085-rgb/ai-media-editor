@@ -5,6 +5,11 @@
 import { AUDIO_STATE, DEFAULT_AUDIO_SETTINGS, FADE_TYPE } from './audioTypes';
 
 /**
+ * Time tolerance for keyframe comparison (in seconds)
+ */
+const TIME_TOLERANCE = 0.01;
+
+/**
  * Generate unique ID for audio clip
  */
 const generateId = () => `audio-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -187,7 +192,7 @@ class AudioClip {
    */
   addVolumeKeyframe(time, value, easing = 'linear') {
     // Remove existing keyframe at same time
-    this.volumeKeyframes = this.volumeKeyframes.filter(kf => Math.abs(kf.time - time) > 0.01);
+    this.volumeKeyframes = this.volumeKeyframes.filter(kf => Math.abs(kf.time - time) > TIME_TOLERANCE);
     
     this.volumeKeyframes.push({
       id: generateId(),

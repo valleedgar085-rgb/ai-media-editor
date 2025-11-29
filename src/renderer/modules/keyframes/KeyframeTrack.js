@@ -5,6 +5,11 @@
 import { EASING_PRESET, PROPERTY_RANGE, DEFAULT_KEYFRAME } from './keyframeTypes';
 
 /**
+ * Time tolerance for keyframe comparison (in seconds)
+ */
+const TIME_TOLERANCE = 0.001;
+
+/**
  * Generate unique keyframe ID
  */
 const generateId = () => `kf-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -103,7 +108,7 @@ class KeyframeTrack {
    */
   addKeyframe(time, value, easing = EASING_PRESET.LINEAR) {
     // Remove existing keyframe at same time (within tolerance)
-    this.keyframes = this.keyframes.filter(kf => Math.abs(kf.time - time) > 0.001);
+    this.keyframes = this.keyframes.filter(kf => Math.abs(kf.time - time) > TIME_TOLERANCE);
     
     // Clamp value to range
     const clampedValue = Math.max(this.range.min, Math.min(this.range.max, value));

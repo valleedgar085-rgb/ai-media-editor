@@ -6,9 +6,15 @@ on:
   pull_request:
     branches: [main, master]
 
+# Minimum required permissions for CI jobs
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     strategy:
       matrix:
@@ -43,6 +49,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository

@@ -20,6 +20,18 @@ class ProjectManager {
     this.lastSaveTime = null;
     this.listeners = new Set();
     this.autosaveEnabled = true;
+    this.debugMode = false; // Set to true to enable debug logging
+  }
+
+  /**
+   * Log a message (only in debug mode)
+   * @param {string} message - Message to log
+   * @param {string} level - Log level ('log', 'warn', 'error')
+   */
+  log(message, level = 'log') {
+    if (this.debugMode || level === 'warn' || level === 'error') {
+      console[level](`[ProjectManager] ${message}`);
+    }
   }
 
   /**
@@ -252,9 +264,9 @@ class ProjectManager {
       localStorage.setItem(key, json);
       localStorage.setItem(STORAGE_KEYS.CURRENT_PROJECT, this.currentProject.id);
       
-      console.log('Project autosaved');
+      this.log('Project autosaved');
     } catch (error) {
-      console.warn('Autosave failed:', error.message);
+      this.log(`Autosave failed: ${error.message}`, 'warn');
     }
   }
 
