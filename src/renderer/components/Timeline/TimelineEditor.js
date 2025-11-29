@@ -5,6 +5,10 @@ import Track from './Track';
 import TimelineRuler from './TimelineRuler';
 import ZoomControls from './ZoomControls';
 
+// Auto-scroll thresholds for playhead visibility
+const SCROLL_TRIGGER_THRESHOLD = 0.8; // Trigger scroll when playhead is past 80% of visible area
+const SCROLL_OFFSET_RATIO = 0.2; // Position playhead at 20% from left after scroll
+
 function TimelineEditor({
   tracks,
   zoom,
@@ -30,10 +34,10 @@ function TimelineEditor({
       const scrollLeft = container.scrollLeft;
       
       // Keep playhead in the center-right portion of visible area
-      if (playheadPosition > scrollLeft + containerWidth * 0.8) {
-        container.scrollLeft = playheadPosition - containerWidth * 0.2;
+      if (playheadPosition > scrollLeft + containerWidth * SCROLL_TRIGGER_THRESHOLD) {
+        container.scrollLeft = playheadPosition - containerWidth * SCROLL_OFFSET_RATIO;
       } else if (playheadPosition < scrollLeft) {
-        container.scrollLeft = playheadPosition - containerWidth * 0.2;
+        container.scrollLeft = playheadPosition - containerWidth * SCROLL_OFFSET_RATIO;
       }
     }
   }, [currentTime, zoom, isPlaying]);

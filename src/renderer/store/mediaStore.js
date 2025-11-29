@@ -1,3 +1,4 @@
+import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 // Simple state management for media items
@@ -279,7 +280,16 @@ const createMediaStore = () => {
 // Singleton instance
 export const mediaStore = createMediaStore();
 
-// React hook for using the store
+/**
+ * React hook for using the media store.
+ * Provides reactive access to store state in React components.
+ * @returns {Object} Current store state
+ * @example
+ * function MyComponent() {
+ *   const { tracks, currentTime, filters } = useMediaStore();
+ *   return <div>{currentTime}</div>;
+ * }
+ */
 export const useMediaStore = () => {
   const [state, setState] = React.useState(mediaStore.getState());
 
@@ -289,6 +299,3 @@ export const useMediaStore = () => {
 
   return state;
 };
-
-// Need to import React for the hook
-import React from 'react';

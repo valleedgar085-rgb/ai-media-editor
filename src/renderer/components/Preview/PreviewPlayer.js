@@ -3,6 +3,9 @@ import { initWebGL, renderFrame, cleanupWebGL } from './webglRenderer';
 import PlaybackControls from './PlaybackControls';
 import FilterControls from './FilterControls';
 
+// Sync threshold in seconds - prevents excessive seeking during playback
+const MEDIA_SYNC_THRESHOLD = 0.3;
+
 function PreviewPlayer({
   tracks,
   currentTime,
@@ -146,7 +149,8 @@ function PreviewPlayer({
 
     const audioTime = currentTime - currentAudioItem.startTime;
     
-    if (Math.abs(audioRef.current.currentTime - audioTime) > 0.1) {
+    // Use threshold to prevent excessive seeking during playback
+    if (Math.abs(audioRef.current.currentTime - audioTime) > MEDIA_SYNC_THRESHOLD) {
       audioRef.current.currentTime = Math.max(0, audioTime);
     }
 
@@ -171,7 +175,8 @@ function PreviewPlayer({
         ? currentTime - currentVideoItem.startTime 
         : 0;
       
-      if (Math.abs(videoRef.current.currentTime - videoTime) > 0.1) {
+      // Use threshold to prevent excessive seeking during playback
+      if (Math.abs(videoRef.current.currentTime - videoTime) > MEDIA_SYNC_THRESHOLD) {
         videoRef.current.currentTime = Math.max(0, videoTime);
       }
       
