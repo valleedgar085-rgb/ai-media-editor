@@ -3,7 +3,7 @@ import { create } from 'zustand';
 /**
  * Generate a unique ID for media items
  */
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 /**
  * Main editor store for Phase 2 timeline and preview features

@@ -150,10 +150,18 @@ function TimelinePanel() {
   // Calculate timeline width
   const timelineWidth = Math.max(1000, duration * zoom + 200);
   
+  // Determine ruler interval based on zoom level
+  const getRulerInterval = (zoomLevel) => {
+    if (zoomLevel > 50) return 1;
+    if (zoomLevel > 20) return 5;
+    if (zoomLevel > 5) return 10;
+    return 30;
+  };
+  
   // Generate ruler marks
   const generateRulerMarks = useCallback(() => {
     const marks = [];
-    const interval = zoom > 50 ? 1 : zoom > 20 ? 5 : zoom > 5 ? 10 : 30;
+    const interval = getRulerInterval(zoom);
     const maxTime = Math.max(duration + 10, timelineWidth / zoom);
     
     for (let time = 0; time <= maxTime; time += interval) {

@@ -46,6 +46,15 @@ const FRAGMENT_SHADER_SOURCE = `
 `;
 
 /**
+ * WebGL context options
+ */
+const WEBGL_CONTEXT_OPTIONS = {
+  alpha: false,
+  antialias: false,
+  preserveDrawingBuffer: true,
+};
+
+/**
  * WebGL Renderer class for GPU-accelerated media rendering
  */
 class WebGLRenderer {
@@ -68,15 +77,8 @@ class WebGLRenderer {
    */
   init() {
     // Get WebGL context
-    this.gl = this.canvas.getContext('webgl', {
-      alpha: false,
-      antialias: false,
-      preserveDrawingBuffer: true,
-    }) || this.canvas.getContext('experimental-webgl', {
-      alpha: false,
-      antialias: false,
-      preserveDrawingBuffer: true,
-    });
+    this.gl = this.canvas.getContext('webgl', WEBGL_CONTEXT_OPTIONS) 
+           || this.canvas.getContext('experimental-webgl', WEBGL_CONTEXT_OPTIONS);
     
     if (!this.gl) {
       console.warn('WebGL not supported, falling back to 2D canvas');

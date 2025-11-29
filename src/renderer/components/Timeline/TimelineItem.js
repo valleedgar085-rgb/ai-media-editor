@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { isVideoFile, isAudioFile } from '../../utils/thumbnailUtils';
 
 const ItemTypes = {
   TIMELINE_ITEM: 'timelineItem',
@@ -97,8 +98,8 @@ function TimelineItem({
     }
   }, [item.thumbnail]);
   
-  const isVideo = item.type === 'video' || item.path?.match(/\.(mp4|webm|mkv|avi|mov)$/i);
-  const isAudio = item.type === 'audio' || item.path?.match(/\.(mp3|wav|ogg|aac|m4a|flac)$/i);
+  const isVideo = item.type === 'video' || isVideoFile(item.path);
+  const isAudio = item.type === 'audio' || isAudioFile(item.path);
   
   // Format duration
   const formatTime = (seconds) => {

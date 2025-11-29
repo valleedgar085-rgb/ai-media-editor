@@ -4,6 +4,10 @@ import WebGLRenderer from '../../utils/WebGLRenderer';
 import PlaybackControls from './PlaybackControls';
 import FilterControls from './FilterControls';
 
+// Sync thresholds in seconds
+const AUDIO_SYNC_THRESHOLD = 0.3;
+const VIDEO_SYNC_THRESHOLD = 0.1;
+
 /**
  * PreviewPlayer component - plays selected media with WebGL rendering
  */
@@ -136,7 +140,7 @@ function PreviewPlayer() {
         // Calculate local time within the audio clip
         const localTime = playhead - currentAudio.startTime;
         
-        if (Math.abs(audioRef.current.currentTime - localTime) > 0.3) {
+        if (Math.abs(audioRef.current.currentTime - localTime) > AUDIO_SYNC_THRESHOLD) {
           audioRef.current.currentTime = localTime;
         }
         
@@ -213,7 +217,7 @@ function PreviewPlayer() {
       const localTime = playhead - currentMedia.startTime;
       
       // Sync video position
-      if (Math.abs(videoRef.current.currentTime - localTime) > 0.1) {
+      if (Math.abs(videoRef.current.currentTime - localTime) > VIDEO_SYNC_THRESHOLD) {
         videoRef.current.currentTime = Math.max(0, localTime);
       }
       
